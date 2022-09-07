@@ -51,13 +51,21 @@ function displayMainMenu(){
                   });
                 break;
             case "Add a Department":
-            
+                let testDept = new Department(1,"Mailroom","The room for mail");
+                db.query('INSERT INTO departments (id,d_name,d_desc) VALUES ?',[[testDept.getArray()]],function (err, results) {
+                    if (err) throw err;  
+                    console.log(results);
+                  });
                 break;
             case "Add a Role":
-            
+                let testRole=new Role(1,"boss","He's the boss");
+                db.query('INSERT INTO roles (id,title,r_desc) VALUES ?',[[testRole.getArray()]],function (err, results) {
+                    if (err) throw err;  
+                    console.log(results);
+                  });
                 break;
             case "Add an Employee":
-            
+               
                 break;
             case "Update Employee Role":
             
@@ -72,5 +80,4 @@ function view(table){
 
 }
 
-init();
 displayMainMenu();

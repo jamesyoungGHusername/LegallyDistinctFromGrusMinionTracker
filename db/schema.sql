@@ -21,9 +21,7 @@ CREATE TABLE employees (
   id INT NOT NULL,
   name VARCHAR(100) NOT NULL,
   roleTitle VARCHAR(100),
-  roleID INT,
   deptName VARCHAR(100),
-  deptID INT,
   PRIMARY KEY (id),
   CONSTRAINT FOREIGN KEY (roleTitle) REFERENCES roles(title),
   CONSTRAINT FOREIGN KEY (deptName) REFERENCES departments(d_name)
