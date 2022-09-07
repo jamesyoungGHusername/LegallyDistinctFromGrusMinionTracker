@@ -1,10 +1,26 @@
 const inquirer = require("inquirer");
+const mysql = require('mysql2');
 const fs = require('fs');
 
 const Employee = require("./lib/Employee");
 const Department = require("./lib/Department");
 const Role = require("./lib/Role");
 const Question = require("./lib/Question");
+
+function init(){
+    const db = mysql.createConnection(
+        {
+          host: 'localhost',
+          // MySQL username,
+          user: 'root',
+          // MySQL password
+          password: '',
+          database: 'courses_db'
+        },
+        console.log(`Connected to the courses_db database.`)
+      );
+
+}
 
 const qTypes = {
     input: "input",
@@ -50,5 +66,5 @@ function displayMainMenu(){
 }
 
 function view(table){
-    
+
 }
