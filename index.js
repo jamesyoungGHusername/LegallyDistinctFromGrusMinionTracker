@@ -6,21 +6,18 @@ const Employee = require("./lib/Employee");
 const Department = require("./lib/Department");
 const Role = require("./lib/Role");
 const Question = require("./lib/Question");
+const db = mysql.createConnection(
+    {
+      host: 'localhost',
+      // MySQL username,
+      user: 'root',
+      // MySQL password
+      password: '',
+      database: 'minionTracker_db'
+    },
+    console.log(`Connected to the minionTracker_db database.`)
+  );
 
-function init(){
-    const db = mysql.createConnection(
-        {
-          host: 'localhost',
-          // MySQL username,
-          user: 'root',
-          // MySQL password
-          password: '',
-          database: 'courses_db'
-        },
-        console.log(`Connected to the courses_db database.`)
-      );
-
-}
 
 const qTypes = {
     input: "input",
@@ -39,26 +36,32 @@ function displayMainMenu(){
     inquirer.prompt([q]).then((response)=>{
         switch (response.Options) {
             case "View All Departments":
-                
+                db.query('SELECT * FROM departments', function (err, results) {
+                    console.log(results);
+                  });
                 break;
             case "View All Roles":
-            
+                db.query('SELECT * FROM roles', function (err, results) {
+                    console.log(results);
+                  });
                 break;
             case "View All Employees":
-            
-            break;
+                db.query('SELECT * FROM employees', function (err, results) {
+                    console.log(results);
+                  });
+                break;
             case "Add a Department":
             
-            break;
+                break;
             case "Add a Role":
             
-            break;
+                break;
             case "Add an Employee":
             
-            break;
+                break;
             case "Update Employee Role":
             
-            break;
+                break;
             default:
                 break;
         }
@@ -68,3 +71,6 @@ function displayMainMenu(){
 function view(table){
 
 }
+
+init();
+displayMainMenu();

@@ -21,7 +21,7 @@
   "homepage": "https://github.com/jamesyoungGHusername/LegallyDistinctFromGrusMinionTracker#readme",
   "dependencies": {
     "console.table": "^0.10.0",
-    "inquirer": "^9.1.1",
+    "inquirer": "^8.2.4",
     "mysql2": "^2.3.3"
   }
 }
