@@ -37,31 +37,25 @@ const qTypes = {
 function displayMainMenu(){
     let q = new Question(qTypes.list,"\n","Options",["View All Departments","View All Roles","View All Employees","Add a Department","Add a Role","Add an Employee","Update Employee Role"]);
     inquirer.prompt([q]).then((response)=>{
-        let testRole=new Role(2,"minion","should unionize");
-        let testDept = new Department(1,"Mailroom","The room for mail");
+        let testRole=new Role("minion","should unionize");
+        let testDept = new Department("Mailroom","The room for mail");
         switch (response.Options) {
             case "View All Departments":
-                getAvailable("departments");
+                showAvailable("departments");
                 break;
             case "View All Roles":
-                getAvailable("roles");
+                showAvailable("roles");
                 break;
             case "View All Employees":
-                getAvailable("employees");
+                showAvailable("employees");
                 break;
             case "Add a Department":
-                
-                // db.query('INSERT INTO departments (id,d_name,d_desc) VALUES ?',[[testDept.getArray()]],function (err, results) {
-                //     if (err) throw err;  
-                //     console.log(results);
-                //   });
+                promptNewDept(() => returnToMainMenu());
+
                 break;
             case "Add a Role":
-                
-                // db.query('INSERT INTO roles (id,title,r_desc) VALUES ?',[[testRole.getArray()]],function (err, results) {
-                //     if (err) throw err;  
-                //     console.log(results);
-                //   });
+                promptNewRole(() => returnToMainMenu());
+
                 break;
             case "Add an Employee":
 
@@ -91,23 +85,61 @@ function returnToMainMenu(){
 
 }
 
-function getAvailable(table){
+//takes a string containing the name of the table to be displayed.
+function showAvailable(table){
     db.query('SELECT * FROM '+table, function (err, results) {
         console.table(results);
         returnToMainMenu();
       });
 }
 
-function promptNewRole(){
-    let q = [new Question(qTypes.input,"What is the new role's title?","roleTitle"),new Question(qTypes.input,"What is the role's description?","rollDesc")];
+//takes a function indicating where the prompt should exit to when complete.
+function promptNewRole(exitTo){
+    let q = [new Question(qTypes.input,"What is the new role's title?","roleTitle"),new Question(qTypes.input,"What is the role's description?","roleDesc")];
     inquirer.prompt(q).then((response)=>{
         if(response.roleTitle){
-            let r = new Role()
-            displayMainMenu();
+            let r = new Role(response.roleTitle,response.roleDesc);
+            db.query('INSERT INTO roles (title,r_desc) VALUES ?',[[r.getArray()]],function (err, results) {
+                if (err) throw err;  
+                console.log(results);
+                exitTo();
+            });
         }else{
-            returnToMainMenu();
+            exitTo();
         }
     });
+}
+
+takes
+function promptNewDept(exitTo){
+    let q = [new Question(qTypes.input,"What is the new department's name?","name"),new Question(qTypes.input,"What is the new deparment's description?","desc")];
+    inquirer.prompt(q).then((response)=>{
+        if(response.name){
+            let d = new Department(response.name,response.desc);
+            db.query('INSERT INTO departments (d_name,d_desc) VALUES ?',[[d.getArray()]],function (err, results) {
+                if (err) throw err;  
+                console.log(results);
+                exitTo();
+            });
+        }else{
+            exitTo();
+        }
+    });
+}
+
+//takes an optional name, role, and dept. Allows the function to call other functions (like to make a new role midway through) and then return to promptNewEmployee() without losing their progress.
+function promptNewEmployee(startingName,startingRole,startingDept){
+    let d = availableDepartments();
+    let r = availableRoles();
+}
+
+//gets the available departments and returns an array of strings to give the user options when building an employee.
+function availableDepartments(){
+
+}
+//gets the available roles and returns an array of strings to give the user options when building an employee.
+function availableRoles(){
+
 }
 
 
