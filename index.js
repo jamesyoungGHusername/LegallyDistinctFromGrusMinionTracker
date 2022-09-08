@@ -6,6 +6,7 @@ const Employee = require("./lib/Employee");
 const Department = require("./lib/Department");
 const Role = require("./lib/Role");
 const Question = require("./lib/Question");
+const { deprecate } = require("util");
 var db = mysql.createConnection(
     {
       host: 'localhost',
@@ -148,30 +149,39 @@ function promptNewDept(exitTo){
 }
 
 //takes an optional name, role, and dept. Allows the function to call other functions (like to make a new role midway through) and then return to promptNewEmployee() without losing their progress.
-function promptNewEmployee(startingName,startingDept,startingRole,){
-    let d = availableDepartments();
+var draftEmployee = new Employee();
+function promptName(){
+    let q = new Question(qTypes.input,"What is this employee's name","name");
+    inquirer.prompt([q]).then((response)=>{
+        draftEmployee.setName(response.name);
+        promptDept();
+    });
+}
+
+function promptDept(){
+    let ad = availableDepartments();
+    let d = [];
+    for(const item of ad){
+        d.append(ad.getName());
+    }
     d.append("-Create New Department");
+    let q = new Question(qTypes.list,"What is this employee's department?","dept",d);
+    inquirer.prompt([q]).then((response)=>{
+        if(response.dept == "-Create New Department"){
+            promptNewDept(()=>promptDept());
+        }else{
+            draftEmployee.setDept(response.dep)
+        }
+    });
+}
+
+function promptRole(){
     let r = availableRoles();
     r.append("-Create New Role");
-    let q = [new Question(qTypes.input,"What is this employee's name","name"),new Question(qTypes.list,"What is this employee's department?","dept",d),new Question(qTypes.list,"What is this employee's role.","role",r)];
-    //inelegant. This sequence allows the the 
-    if(startingName && startingRole && startingDept){
-        
-    }else if(startingName && startingDept){
-        inquirer.prompt([q[2]]).then((response)=>{
-            
-        });
-    }else if(startingName){
-        inquirer.prompt([q[1],q[2]]).then((response)=>{
-            if(response.dept=="-Create New Department"){
+    let q = new Question(qTypes.list,"What is this employee's role.","role",r);
+    inquirer.prompt([q]).then((response)=>{
 
-            }
-        });
-    }else{
-        inquirer.prompt(q).then((response)=>{
-            
-        });
-    }
+    });
 }
 
 //gets the available departments and returns an array of strings to give the user options when building an employee.
