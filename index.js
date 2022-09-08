@@ -12,9 +12,7 @@ var draftEmployee = new Employee();
 var db = mysql.createConnection(
     {
       host: 'localhost',
-      // MySQL username,
       user: 'root',
-      // MySQL password
       password: '',
       database: 'minionTracker_db'
     },
@@ -22,6 +20,7 @@ var db = mysql.createConnection(
 );
 
 async function main(){
+    
     displayMainMenu();
 }
 
@@ -161,7 +160,7 @@ async function promptName(){
 
 async function promptDept(){
     let ad = await availableDepartments();
-    console.log(ad);
+    console.table(ad);
     let d_list = [];
     for(const item of ad){
         d_list.push(item.d_name);
@@ -184,8 +183,8 @@ async function promptRole(){
     for(const item of ar){
         r_list.push(item.r_name);
     }
-    r.push("-Create New Role");
-    let q = new Question(qTypes.list,"What is this employee's role.","role",r);
+    r_list.push("-Create New Role");
+    let q = new Question(qTypes.list,"What is this employee's role?","role",r_list);
     inquirer.prompt([q]).then((response)=>{
         if(response.role == "-Create New Role"){
             promptNewRole(()=>promptRole())
@@ -197,9 +196,20 @@ async function promptRole(){
 }
 
 async function assignManager(){
-    let employeeList = availableManagers();
+    let am = await availableManagers();
+    let m_list = [];
+    for(const item of am){
+        m_list.push(item.name);
+    }
+    m_list.push("-No Manager");
+    let q = new Question(qTypes.list,"Who is this employee's manager?","manager",m_list);
+    inquirer.prompt([q]).then((response)=>{
+        //TO DO: write code that matches the response to the selected manager's id, and assigns that manager id to the new employee.
+        //THEN
+        //code for db.query('INSERT INTO
+    });
 }
-
+//To Do: refactor into one function 
 //gets the available departments and returns an array of strings to give the user options when building an employee.
 function availableDepartments(){
     return new Promise( ( resolve, reject ) => {
@@ -221,12 +231,10 @@ function availableRoles(){
     } );
 }
 
+
 function availabeManagers(){
 
 }
 
-function loadingLock(){
-
-}
 
 main();
