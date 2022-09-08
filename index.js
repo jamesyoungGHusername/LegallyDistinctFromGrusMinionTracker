@@ -7,6 +7,8 @@ const Department = require("./lib/Department");
 const Role = require("./lib/Role");
 const Question = require("./lib/Question");
 const { deprecate } = require("util");
+var draftEmployee = new Employee();
+
 var db = mysql.createConnection(
     {
       host: 'localhost',
@@ -36,6 +38,7 @@ const qTypes = {
 }
 
 function displayMainMenu(){
+    draftEmployee=new Employee();
     let q = new Question(qTypes.list,"\n","Options",["View All Departments","View All Roles","View All Employees","Add a Department","Add a Role","Add an Employee","Update Employee Role"]);
     inquirer.prompt([q]).then((response)=>{
         let testRole=new Role("minion","should unionize");
@@ -59,7 +62,7 @@ function displayMainMenu(){
 
                 break;
             case "Add an Employee":
-
+                promptName();
                 // db.query('INSERT INTO employees (id,name,roleTitle,deptName,managerID) VALUES ?',[[testEmployee.getArray()]],function (err, results) {
                 //     if (err) throw err;  
                 //     console.log(results);
@@ -121,7 +124,7 @@ function promptNewRole(exitTo){
     });
 }
 
-takes
+
 function promptNewDept(exitTo){
     let q = [new Question(qTypes.input,"What is the new department's name?","name"),new Question(qTypes.input,"What is the new deparment's description?","desc")];
     inquirer.prompt(q).then((response)=>{
@@ -129,14 +132,12 @@ function promptNewDept(exitTo){
             let d = new Department(response.name,response.desc);
             db.query('INSERT INTO departments (d_name,d_desc) VALUES ?',[[d.getArray()]],function (err, results) {
                 if (err) throw err;  
-                console.log(results);
                 //if an exit destination is specified, use that, otherwise use the default.
                 if(exitTo){
-                    exitTo(results);
+                    exitTo();
                 }else{
                     another(()=>promptNewDept());
                 }
-                
             });
         }else{
             if(exitTo){
@@ -149,53 +150,82 @@ function promptNewDept(exitTo){
 }
 
 //takes an optional name, role, and dept. Allows the function to call other functions (like to make a new role midway through) and then return to promptNewEmployee() without losing their progress.
-var draftEmployee = new Employee();
-function promptName(){
+
+async function promptName(){
     let q = new Question(qTypes.input,"What is this employee's name","name");
-    inquirer.prompt([q]).then((response)=>{
-        draftEmployee.setName(response.name);
-        promptDept();
-    });
+    draftEmployee.setName(await inquirer.prompt([q]).then((response)=>{
+        return (response.name);
+    }));
+    promptDept();
 }
 
-function promptDept(){
-    let ad = availableDepartments();
-    let d = [];
+async function promptDept(){
+    let ad = await availableDepartments();
+    console.log(ad);
+    let d_list = [];
     for(const item of ad){
-        d.append(ad.getName());
+        d_list.push(item.d_name);
     }
-    d.append("-Create New Department");
-    let q = new Question(qTypes.list,"What is this employee's department?","dept",d);
+    d_list.push("-Create New Department");
+    let q = new Question(qTypes.list,"What is this employee's department?","dept",d_list);
     inquirer.prompt([q]).then((response)=>{
         if(response.dept == "-Create New Department"){
             promptNewDept(()=>promptDept());
         }else{
-            draftEmployee.setDept(response.dep)
+            draftEmployee.setDept(response.dept);
+            promptRole();
         }
     });
 }
 
-function promptRole(){
-    let r = availableRoles();
-    r.append("-Create New Role");
+async function promptRole(){
+    let ar = await availableRoles();
+    let r_list = [];
+    for(const item of ar){
+        r_list.push(item.r_name);
+    }
+    r.push("-Create New Role");
     let q = new Question(qTypes.list,"What is this employee's role.","role",r);
     inquirer.prompt([q]).then((response)=>{
-
+        if(response.role == "-Create New Role"){
+            promptNewRole(()=>promptRole())
+        }else{
+            draftEmployee.setRole(response.role);
+            assignManager();
+        }
     });
+}
+
+async function assignManager(){
+    let employeeList = availableManagers();
 }
 
 //gets the available departments and returns an array of strings to give the user options when building an employee.
 function availableDepartments(){
-
+    return new Promise( ( resolve, reject ) => {
+        db.query('SELECT * FROM departments', ( err, rows ) => {
+            if ( err )
+                return reject( err );
+            resolve( rows );
+        } );
+    } );
 }
 //gets the available roles and returns an array of strings to give the user options when building an employee.
 function availableRoles(){
+    return new Promise( ( resolve, reject ) => {
+        db.query('SELECT * FROM roles', ( err, rows ) => {
+            if ( err )
+                return reject( err );
+            resolve( rows );
+        } );
+    } );
+}
+
+function availabeManagers(){
 
 }
 
-
-
-function view(table){
+function loadingLock(){
 
 }
 
