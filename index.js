@@ -50,11 +50,11 @@ function displayMainMenu(){
                 showAvailable("employees");
                 break;
             case "Add a Department":
-                promptNewDept(() => returnToMainMenu());
+                promptNewDept();
 
                 break;
             case "Add a Role":
-                promptNewRole(() => returnToMainMenu());
+                promptNewRole();
 
                 break;
             case "Add an Employee":
@@ -73,23 +73,24 @@ function displayMainMenu(){
     });
 }
 
-function returnToMainMenu(){
-    let q = new Question(qTypes.confirm,"Return To Main Menu?","navConfirm");
+//takes a prompt function as a param, and asks if the user would like to create another of that object. Returns to the main menu if they dont, and repeats the call if they do.
+function another(funcToRepeat){
+    let q = new Question(qTypes.confirm,"Create another?","navConfirm");
     inquirer.prompt([q]).then((response)=>{
         if(response.navConfirm){
-            displayMainMenu();
+            funcToRepeat();
         }else{
-            returnToMainMenu();
+            displayMainMenu();
         }
     });
-
 }
+
 
 //takes a string containing the name of the table to be displayed.
 function showAvailable(table){
     db.query('SELECT * FROM '+table, function (err, results) {
         console.table(results);
-        returnToMainMenu();
+        displayMainMenu();
       });
 }
 
@@ -102,10 +103,19 @@ function promptNewRole(exitTo){
             db.query('INSERT INTO roles (title,r_desc) VALUES ?',[[r.getArray()]],function (err, results) {
                 if (err) throw err;  
                 console.log(results);
-                exitTo();
+                //if an exit destination is specified, use that, otherwise use the default.
+                if(exitTo){
+                    exitTo();
+                }else{
+                    another(()=>promptNewRole());
+                }
             });
         }else{
-            exitTo();
+            if(exitTo){
+                exitTo();
+            }else{
+                another(()=>promptNewRole());
+            }
         }
     });
 }
@@ -119,18 +129,49 @@ function promptNewDept(exitTo){
             db.query('INSERT INTO departments (d_name,d_desc) VALUES ?',[[d.getArray()]],function (err, results) {
                 if (err) throw err;  
                 console.log(results);
-                exitTo();
+                //if an exit destination is specified, use that, otherwise use the default.
+                if(exitTo){
+                    exitTo(results);
+                }else{
+                    another(()=>promptNewDept());
+                }
+                
             });
         }else{
-            exitTo();
+            if(exitTo){
+                exitTo();
+            }else{
+                another(()=>promptNewDept());
+            }
         }
     });
 }
 
 //takes an optional name, role, and dept. Allows the function to call other functions (like to make a new role midway through) and then return to promptNewEmployee() without losing their progress.
-function promptNewEmployee(startingName,startingRole,startingDept){
+function promptNewEmployee(startingName,startingDept,startingRole,){
     let d = availableDepartments();
+    d.append("-Create New Department");
     let r = availableRoles();
+    r.append("-Create New Role");
+    let q = [new Question(qTypes.input,"What is this employee's name","name"),new Question(qTypes.list,"What is this employee's department?","dept",d),new Question(qTypes.list,"What is this employee's role.","role",r)];
+    //inelegant. This sequence allows the the 
+    if(startingName && startingRole && startingDept){
+        
+    }else if(startingName && startingDept){
+        inquirer.prompt([q[2]]).then((response)=>{
+            
+        });
+    }else if(startingName){
+        inquirer.prompt([q[1],q[2]]).then((response)=>{
+            if(response.dept=="-Create New Department"){
+
+            }
+        });
+    }else{
+        inquirer.prompt(q).then((response)=>{
+            
+        });
+    }
 }
 
 //gets the available departments and returns an array of strings to give the user options when building an employee.
