@@ -12,9 +12,13 @@ CREATE TABLE departments (
 
 CREATE TABLE roles(
     id INT AUTO_INCREMENT,
+    deptID INT NOT NULL,
+    deptName VARCHAR(100) NOT NULL,
     title VARCHAR(100),
     r_desc VARCHAR(100),
-    PRIMARY KEY (id, title)
+    salary INT NOT NULL,
+    PRIMARY KEY (id, title,salary),
+    CONSTRAINT FOREIGN KEY (deptID,deptName) REFERENCES departments(id,d_name)
 );
 
 CREATE TABLE employees (
@@ -22,11 +26,12 @@ CREATE TABLE employees (
   name VARCHAR(100) NOT NULL,
   roleID INT,
   roleTitle VARCHAR(100),
+  salary INT NOT NULL,
   deptID INT,
   deptName VARCHAR(100),
   managerID INT,
   PRIMARY KEY (id),
-  CONSTRAINT FOREIGN KEY (roleID, roleTitle) REFERENCES roles(id, title),
+  CONSTRAINT FOREIGN KEY (roleID, roleTitle, salary) REFERENCES roles(id, title, salary),
   CONSTRAINT FOREIGN KEY (deptID, deptName) REFERENCES departments(id, d_name)
   
 );

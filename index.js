@@ -36,6 +36,9 @@ const qTypes = {
     editor: "editor"
 }
 
+//the main menu. The entire thing is recursive, with functions allowed to speficy exit points.
+//this means you can call the new department function from the main menu and return to the main menu when you're done, 
+//or you can call it midway through making a new employee and once you're done it'll exit right back to where you left off with the employee.
 function displayMainMenu(){
     draftEmployee=new Employee();
     let q = new Question(qTypes.list,"\n","Options",["View All Departments","View All Roles","View All Employees","Add a Department","Add a Role","Add an Employee","Update Employee Role"]);
@@ -54,18 +57,12 @@ function displayMainMenu(){
                 break;
             case "Add a Department":
                 promptNewDept();
-
                 break;
             case "Add a Role":
                 promptNewRole();
-
                 break;
             case "Add an Employee":
                 promptName();
-                // db.query('INSERT INTO employees (id,name,roleTitle,deptName,managerID) VALUES ?',[[testEmployee.getArray()]],function (err, results) {
-                //     if (err) throw err;  
-                //     console.log(results);
-                //   });
                 break;
             case "Update Employee Role":
             
@@ -88,7 +85,6 @@ function another(funcToRepeat){
     });
 }
 
-
 //takes a string containing the name of the table to be displayed.
 function showAvailable(table){
     db.query('SELECT * FROM '+table, function (err, results) {
@@ -98,21 +94,20 @@ function showAvailable(table){
 }
 
 //takes a function indicating where the prompt should exit to when complete.
-function promptNewRole(exitTo){
-    let q = [new Question(qTypes.input,"What is the new role's title?","roleTitle"),new Question(qTypes.input,"What is the role's description?","roleDesc")];
-    inquirer.prompt(q).then((response)=>{
+async function promptNewRole(exitTo){
+    let ad = await availableDepartments();
+    console.table(await availableRoles());
+    let d_list = [];
+    for(const item of ad){
+        d_list.push(item.d_name);
+    }
+    d_list.push("-Create New Department");
+    let q = [new Question(qTypes.input,"What is the new role's title?","roleTitle"),new Question(qTypes.input,"What is the role's description?","roleDesc"),new Question(qTypes.list,"To which department does this role belong?","roleDept",d_list),new Question(qTypes.input,"What is the salary of this role?","salary")];
+    
+    let response = await inquirer.prompt(q).then((response)=>{
         if(response.roleTitle){
-            let r = new Role(response.roleTitle,response.roleDesc);
-            db.query('INSERT INTO roles (title,r_desc) VALUES ?',[[r.getArray()]],function (err, results) {
-                if (err) throw err;  
-                console.log(results);
-                //if an exit destination is specified, use that, otherwise use the default.
-                if(exitTo){
-                    exitTo();
-                }else{
-                    another(()=>promptNewRole());
-                }
-            });
+            
+                return response;
         }else{
             if(exitTo){
                 exitTo();
@@ -121,12 +116,32 @@ function promptNewRole(exitTo){
             }
         }
     });
+    if(response.roleDept == "-Create New Department"){
+        await promptNewDept(()=>promptNewRole());
+        console.log("New role added");
+        return;
+    }
+
+    //query to get dept object
+    let deptQuery = await queryDeptFrom(response.roleDept);
+    let loadedDept = new Department(deptQuery[0].d_name,deptQuery[0].d_desc);
+    loadedDept.set(deptQuery[0].id);
+    let r = new Role(response.roleTitle,response.roleDesc,loadedDept,response.salary);
+    db.query('INSERT INTO roles (deptID,deptName,title,r_desc,salary) VALUES ?',[[r.getArray()]],function (err, results) {
+        if (err) throw err;  
+        //if an exit destination is specified, use that, otherwise use the default.
+        if(exitTo){
+            exitTo();
+        }else{
+            another(()=>promptNewRole());
+        }
+    });
 }
 
 
-function promptNewDept(exitTo){
+async function promptNewDept(exitTo){
     let q = [new Question(qTypes.input,"What is the new department's name?","name"),new Question(qTypes.input,"What is the new deparment's description?","desc")];
-    inquirer.prompt(q).then((response)=>{
+    await inquirer.prompt(q).then((response)=>{
         if(response.name){
             let d = new Department(response.name,response.desc);
             db.query('INSERT INTO departments (d_name,d_desc) VALUES ?',[[d.getArray()]],function (err, results) {
@@ -135,6 +150,7 @@ function promptNewDept(exitTo){
                 if(exitTo){
                     exitTo();
                 }else{
+                    //instructs another to exit to the new department prompt. (to make another dept) the other option in another() is to navigate to the main menu.
                     another(()=>promptNewDept());
                 }
             });
@@ -174,17 +190,9 @@ async function promptDept(){
             return response.dept;
         }
     });
-    let deptQuery = await new Promise( ( resolve, reject ) => {
-        db.query('SELECT * FROM departments WHERE d_name = ?',response, ( err, rows ) => {
-            if ( err )
-                return reject( err );
-            resolve( rows );
-        } );
-    } );
-    console.log(deptQuery[0].id);
+    let deptQuery = await queryDeptFrom(response);
     let loadedDept = new Department(deptQuery[0].d_name,deptQuery[0].d_desc);
     loadedDept.set(deptQuery[0].id);
-    console.log(loadedDept);
     draftEmployee.setDept(loadedDept);
     promptRole();
 }
@@ -202,22 +210,33 @@ async function promptRole(){
         if(response.role == "-Create New Role"){
             promptNewRole(()=>promptRole())
         }else{
-            return response.role;
-            
+            return response.role;  
         }
     });
-    let roleQuery = await new Promise( ( resolve, reject ) => {
-        db.query('SELECT * FROM roles WHERE title = ?',response, ( err, rows ) => {
+    let roleQuery = await queryRoleFrom(response);
+    let loadedRole = new Role(roleQuery[0].title,roleQuery[0].r_desc,roleQuery[0].deptName,roleQuery[0].salary);
+    loadedRole.set(roleQuery[0].id);
+    draftEmployee.setRole(loadedRole);
+    assignManager();
+}
+
+async function queryRoleFrom(title){
+    return new Promise( ( resolve, reject ) => {
+        db.query('SELECT * FROM roles WHERE title = ?',title, ( err, rows ) => {
             if ( err )
                 return reject( err );
             resolve( rows );
         } );
     } );
-    console.log(roleQuery);
-    let loadedRole = new Role(roleQuery[0].title,roleQuery[0].r_desc);
-    loadedRole.set(roleQuery[0].id);
-    draftEmployee.setRole(loadedRole);
-    assignManager();
+}
+async function queryDeptFrom(name){
+    return new Promise( ( resolve, reject ) => {
+        db.query('SELECT * FROM departments WHERE d_name = ?',name, ( err, rows ) => {
+            if ( err )
+                return reject( err );
+            resolve( rows );
+        } );
+    } );
 }
 
 async function assignManager(exitTo){
@@ -241,11 +260,8 @@ async function assignManager(exitTo){
                 }
             }
         }
-        console.log(draftEmployee);
-        console.log(draftEmployee.getArray());
-        db.query('INSERT INTO employees (name,roleID,roleTitle,deptID,deptName,managerID) VALUES ?',[[draftEmployee.getArray()]],function (err, results) {
+        db.query('INSERT INTO employees (name,roleID,roleTitle,salary,deptID,deptName,managerID) VALUES ?',[[draftEmployee.getArray()]],function (err, results) {
             if (err) throw err;  
-            console.log(results);
             //if an exit destination is specified, use that, otherwise use the default.
             if(exitTo){
                 exitTo();
@@ -286,5 +302,12 @@ function availableManagers(){
     } );
 }
 
+async function updateRole(){
+    //get list of employees
+    //ask user to pick
+    //get list of roles
+    //ask user to pick.
+    //set employee role to new role picked by user.
+}
 
 main();
