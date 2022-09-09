@@ -1,162 +1,71 @@
 # LegallyDistinctFromGrusMinionTracker
+ [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## Your Task
+  
 
-Developers frequently have to create interfaces that allow non-developers to easily view and interact with information stored in databases. These interfaces are called **content management systems (CMS)**. Your assignment this week is to build a command-line application from scratch to manage a company's employee database, using Node.js, Inquirer, and MySQL.
+  # Description
 
-Because this application won’t be deployed, you’ll also need to create a walkthrough video that demonstrates its functionality and all of the following acceptance criteria being met. You’ll need to submit a link to the video and add it to the README of your project.
+    A terminal-based minio-umm, i mean-employee management app. Takes user input and saves that info to an sql file.
+    
 
-## User Story
+  ## Table of Contents
 
-```md
-AS A business owner
-I WANT to be able to view and manage the departments, roles, and employees in my company
-SO THAT I can organize and plan my business
-```
+  [Installation](#installation)
 
-## Acceptance Criteria
+  [Usage](#usage)
 
-```md
- 
-WHEN I choose to view all employees
-THEN I am presented with a formatted table showing employee data including the managers that the employees report to
+  [License](#license)
 
+  [Collaborators](#collaborators)
 
-WHEN I choose to add an employee
-THEN I am prompted to enter the employee’s first name, last name, role, and manager, and that employee is added to the database
+  [Contributing](#contributing)
 
-WHEN I choose to update an employee role
-THEN I am prompted to select an employee to update and their new role and this information is updated in the database 
-```
+  [Tests](#tests)
 
-## Mock-Up
+  [Questions](#questions)
 
-The following video shows an example of the application being used from the command line:
+  
 
-[![A video thumbnail shows the command-line employee management application with a play button overlaying the view.](./Assets/12-sql-homework-video-thumbnail.png)](https://2u-20.wistia.com/medias/2lnle7xnpk)
+  # Installation
 
-## Getting Started
+  It can be downloaded from GitHub, and run using the terminal. Uses node.js, npm, Inquirer, and mysql2
 
-You’ll need to use the [MySQL2 package](https://www.npmjs.com/package/mysql2) to connect to your MySQL database and perform queries, the [Inquirer package](https://www.npmjs.com/package/inquirer) to interact with the user via the command line, and the [console.table package](https://www.npmjs.com/package/console.table) to print MySQL rows to the console.
+  
 
-**Important**: You will be committing a file that contains your database credentials. Make sure that your MySQL password is not used for any other personal accounts, because it will be visible on GitHub. In upcoming lessons, you will learn how to better secure this password, or you can start researching npm packages now that could help you.
+  # Usage 
 
-You might also want to make your queries asynchronous. MySQL2 exposes a `.promise()` function on Connections to upgrade an existing non-Promise connection to use Promises. To learn more and make your queries asynchronous, refer to the [npm documentation on MySQL2](https://www.npmjs.com/package/mysql2).
+The app displays a main menu, and allows the user to select from several options that allow to view or add to sections of the database. They can save or view employees, roles, and departments. Many of the prompt functions take exit points as params, allowing the user to, for example, create a new role midway through creating a new employee, and when they're done they'll be returned to right where they left off while creating the employee without losing any progress.
+  
+  # License 
 
-Design the database schema as shown in the following image:
+  [Copyright 2022 James Young \n Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions: The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software. THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.](https://opensource.org/licenses/MIT)
 
-![Database schema includes tables labeled “employee,” role,” and “department.”](./Assets/12-sql-homework-demo-01.png)
+  
 
-As the image illustrates, your schema should contain the following three tables:
+  # Collaborators
 
-* `department`
+  James Young
 
-    * `id`: `INT PRIMARY KEY`
+  
 
-    * `name`: `VARCHAR(30)` to hold department name
+  # Contributing
 
-* `role`
+  Contact James on github or by email using the mailto in the readme
 
-    * `id`: `INT PRIMARY KEY`
+  
 
-    * `title`: `VARCHAR(30)` to hold role title
+  # Tests
 
-    * `salary`: `DECIMAL` to hold role salary
+  No testing suite has currently been made for this project.
 
-    * `department_id`: `INT` to hold reference to department role belongs to
 
-* `employee`
 
-    * `id`: `INT PRIMARY KEY`
+  # Questions
 
-    * `first_name`: `VARCHAR(30)` to hold employee first name
+  [Github](https://www.github.com/jamesyoungGHusername)
 
-    * `last_name`: `VARCHAR(30)` to hold employee last name
+  [Email](mailto:jamesyoungwrites@gmail.com)
+  
 
-    * `role_id`: `INT` to hold reference to employee role
 
-    * `manager_id`: `INT` to hold reference to another employee that is the manager of the current employee (`null` if the employee has no manager)
-
-You might want to use a separate file that contains functions for performing specific SQL queries you'll need to use. A constructor function or class could be helpful for organizing these. You might also want to include a `seeds.sql` file to pre-populate your database, making the development of individual features much easier.
-
-## Bonus
-
-Try to add some additional functionality to your application, such as the ability to do the following:
-
-* Update employee managers.
-
-* View employees by manager.
-
-* View employees by department.
-
-* Delete departments, roles, and employees.
-
-* View the total utilized budget of a department&mdash;in other words, the combined salaries of all employees in that department.
-
-## Grading Requirements
-
-This homework is graded based on the following criteria:
-
-### Deliverables: 10%
-
-* Your GitHub repository containing your application code.
-
-### Walkthrough Video: 27%
-
-* A walkthrough video that demonstrates the functionality of the employee tracker must be submitted, and a link to the video should be included in your README file.
-
-* The walkthrough video must show all of the technical acceptance criteria being met.
-
-* The walkthrough video must demonstrate how a user would invoke the application from the command line.
-
-* The walkthrough video must demonstrate a functional menu with the options outlined in the acceptance criteria.
-
-### Technical Acceptance Criteria: 40%
-
-* Satisfies all of the preceding acceptance criteria plus the following:
-
-    * Uses the [Inquirer package](https://www.npmjs.com/package/inquirer).
-
-    * Uses the [MySQL2 package](https://www.npmjs.com/package/mysql2) to connect to a MySQL database.
-
-    * Uses the [console.table package](https://www.npmjs.com/package/console.table) to print MySQL rows to the console.
-
-* Follows the table schema outlined in the homework instructions.
-
-### Repository Quality: 13%
-
-* Repository has a unique name.
-
-* Repository follows best practices for file structure and naming conventions.
-
-* Repository follows best practices for class/id naming conventions, indentation, quality comments, etc.
-
-* Repository contains multiple descriptive commit messages.
-
-* Repository contains a high-quality README with description and a link to a walkthrough video.
-
-### Application Quality 10%
-
-* The application user experience is intuitive and easy to navigate.
-
-### Bonus
-
-Fulfilling any of the following can add up to 20 points to your grade. Note that the highest grade you can achieve is still 100:
-
-* Application allows users to update employee managers (2 points).
-
-* Application allows users to view employees by manager (2 points).
-
-* Application allows users to view employees by department (2 points).
-
-* Application allows users to delete departments, roles, and employees (2 points for each).
-
-* Application allows users to view the total utilized budget of a department&mdash;in other words, the combined salaries of all employees in that department (8 points).
-
-## Review
-
-You are required to submit BOTH of the following for review:
-
-* A walkthrough video demonstrating the functionality of the application.
-
-* The URL of the GitHub repository, with a unique name and a README describing the project.
+  
