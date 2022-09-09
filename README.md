@@ -30,6 +30,8 @@
 
   It can be downloaded from GitHub, and run using the terminal. Uses node.js, npm, Inquirer, and mysql2
 
+  [A demo can be found on youtube here](https://youtu.be/N_TIx7S1leI)
+
   
 
   # Usage 
