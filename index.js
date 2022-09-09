@@ -184,13 +184,13 @@ async function promptDept(){
     d_list.push("-Create New Department");
     let q = new Question(qTypes.list,"What is this employee's department?","dept",d_list);
     let response = await inquirer.prompt([q]).then((response)=>{
-        if(response.dept == "-Create New Department"){
-            promptNewDept(()=>promptDept());
-        }else{
-            return response.dept;
-        }
+        return response;
     });
-    let deptQuery = await queryDeptFrom(response);
+    if(response.dept == "-Create New Department"){
+        promptNewDept(()=>promptDept());
+        return;
+    }
+    let deptQuery = await queryDeptFrom(response.dept);
     let loadedDept = new Department(deptQuery[0].d_name,deptQuery[0].d_desc);
     loadedDept.set(deptQuery[0].id);
     draftEmployee.setDept(loadedDept);
@@ -207,13 +207,13 @@ async function promptRole(){
     r_list.push("-Create New Role");
     let q = new Question(qTypes.list,"What is this employee's role?","role",r_list);
     let response = await inquirer.prompt([q]).then((response)=>{
-        if(response.role == "-Create New Role"){
-            promptNewRole(()=>promptRole())
-        }else{
-            return response.role;  
-        }
+        return response;
     });
-    let roleQuery = await queryRoleFrom(response);
+    if(response.role == "-Create New Role"){
+        promptNewRole(()=>promptRole());
+        return;
+    }
+    let roleQuery = await queryRoleFrom(response.role);
     let loadedRole = new Role(roleQuery[0].title,roleQuery[0].r_desc,roleQuery[0].deptName,roleQuery[0].salary);
     loadedRole.set(roleQuery[0].id);
     draftEmployee.setRole(loadedRole);

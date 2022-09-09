@@ -16,7 +16,7 @@ CREATE TABLE roles(
     deptName VARCHAR(100) NOT NULL,
     title VARCHAR(100),
     r_desc VARCHAR(100),
-    salary INT NOT NULL,
+    salary VARCHAR(100) NOT NULL,
     PRIMARY KEY (id, title,salary),
     CONSTRAINT FOREIGN KEY (deptID,deptName) REFERENCES departments(id,d_name)
 );
@@ -26,7 +26,7 @@ CREATE TABLE employees (
   name VARCHAR(100) NOT NULL,
   roleID INT,
   roleTitle VARCHAR(100),
-  salary INT NOT NULL,
+  salary VARCHAR(100) NOT NULL,
   deptID INT,
   deptName VARCHAR(100),
   managerID INT,
