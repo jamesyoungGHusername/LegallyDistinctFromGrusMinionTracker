@@ -167,46 +167,90 @@ async function promptDept(){
     }
     d_list.push("-Create New Department");
     let q = new Question(qTypes.list,"What is this employee's department?","dept",d_list);
-    inquirer.prompt([q]).then((response)=>{
+    let response = await inquirer.prompt([q]).then((response)=>{
         if(response.dept == "-Create New Department"){
             promptNewDept(()=>promptDept());
         }else{
-            draftEmployee.setDept(response.dept);
-            promptRole();
+            return response.dept;
         }
     });
+    let deptQuery = await new Promise( ( resolve, reject ) => {
+        db.query('SELECT * FROM departments WHERE d_name = ?',response, ( err, rows ) => {
+            if ( err )
+                return reject( err );
+            resolve( rows );
+        } );
+    } );
+    let loadedDept = new Department(deptQuery[0].d_name,deptQuery[0].d_desc);
+    loadedDept.set(deptQuery.id);
+    draftEmployee.setDept(loadedDept);
+    promptRole();
 }
 
 async function promptRole(){
     let ar = await availableRoles();
     let r_list = [];
+    console.table(ar);
     for(const item of ar){
-        r_list.push(item.r_name);
+        r_list.push(item.title);
     }
     r_list.push("-Create New Role");
     let q = new Question(qTypes.list,"What is this employee's role?","role",r_list);
-    inquirer.prompt([q]).then((response)=>{
+    let response = await inquirer.prompt([q]).then((response)=>{
         if(response.role == "-Create New Role"){
             promptNewRole(()=>promptRole())
         }else{
-            draftEmployee.setRole(response.role);
-            assignManager();
+            return response.role;
+            
         }
     });
+    let roleQuery = await new Promise( ( resolve, reject ) => {
+        db.query('SELECT * FROM roles WHERE title = ?',response, ( err, rows ) => {
+            if ( err )
+                return reject( err );
+            resolve( rows );
+        } );
+    } );
+    let loadedRole = new Role(roleQuery[0].title,roleQuery[0].r_desc);
+    loadedRole.set(roleQuery.id);
+    draftEmployee.setRole(loadedRole);
+    assignManager();
 }
 
 async function assignManager(){
     let am = await availableManagers();
+    
+    let id_list=[];
     let m_list = [];
-    for(const item of am){
-        m_list.push(item.name);
+    if(am){
+        for(const item of am){
+            m_list.push(item.name);
+        }
     }
     m_list.push("-No Manager");
     let q = new Question(qTypes.list,"Who is this employee's manager?","manager",m_list);
     inquirer.prompt([q]).then((response)=>{
-        //TO DO: write code that matches the response to the selected manager's id, and assigns that manager id to the new employee.
-        //THEN
-        //code for db.query('INSERT INTO
+        //matches the response to the selected manager's id, and assigns that manager id to the new employee.
+        if(response.manager!="-No Manager"){
+            for(const manager of am){
+                if(response.manager==manager.name){
+                    draftEmployee.set(manager.id);
+                    break;
+                }
+            }
+        }
+        console.log(draftEmployee);
+        db.query('INSERT INTO employees (name,roleID,roleTitle,deptID,deptName,managerID) VALUES ?',[[r.getArray()]],function (err, results) {
+            if (err) throw err;  
+            console.log(results);
+            //if an exit destination is specified, use that, otherwise use the default.
+
+            if(exitTo){
+                exitTo();
+            }else{
+                another(()=>promptNewRole());
+            }
+        });
     });
 }
 //To Do: refactor into one function 
@@ -232,8 +276,13 @@ function availableRoles(){
 }
 
 
-function availabeManagers(){
-
+function availableManagers(){
+    return new Promise( ( resolve, reject ) => {
+        db.query('SELECT * FROM employees WHERE roleTitle = manager', ( err, rows ) => {
+            if ( err ) return resolve([]);
+            resolve( rows );
+        } );
+    } );
 }
 
 
