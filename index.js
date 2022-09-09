@@ -181,8 +181,10 @@ async function promptDept(){
             resolve( rows );
         } );
     } );
+    console.log(deptQuery[0].id);
     let loadedDept = new Department(deptQuery[0].d_name,deptQuery[0].d_desc);
-    loadedDept.set(deptQuery.id);
+    loadedDept.set(deptQuery[0].id);
+    console.log(loadedDept);
     draftEmployee.setDept(loadedDept);
     promptRole();
 }
@@ -211,15 +213,15 @@ async function promptRole(){
             resolve( rows );
         } );
     } );
+    console.log(roleQuery);
     let loadedRole = new Role(roleQuery[0].title,roleQuery[0].r_desc);
-    loadedRole.set(roleQuery.id);
+    loadedRole.set(roleQuery[0].id);
     draftEmployee.setRole(loadedRole);
     assignManager();
 }
 
-async function assignManager(){
+async function assignManager(exitTo){
     let am = await availableManagers();
-    
     let id_list=[];
     let m_list = [];
     if(am){
@@ -240,11 +242,11 @@ async function assignManager(){
             }
         }
         console.log(draftEmployee);
-        db.query('INSERT INTO employees (name,roleID,roleTitle,deptID,deptName,managerID) VALUES ?',[[r.getArray()]],function (err, results) {
+        console.log(draftEmployee.getArray());
+        db.query('INSERT INTO employees (name,roleID,roleTitle,deptID,deptName,managerID) VALUES ?',[[draftEmployee.getArray()]],function (err, results) {
             if (err) throw err;  
             console.log(results);
             //if an exit destination is specified, use that, otherwise use the default.
-
             if(exitTo){
                 exitTo();
             }else{
@@ -274,7 +276,6 @@ function availableRoles(){
         } );
     } );
 }
-
 
 function availableManagers(){
     return new Promise( ( resolve, reject ) => {
