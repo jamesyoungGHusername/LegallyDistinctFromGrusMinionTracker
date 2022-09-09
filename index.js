@@ -62,10 +62,10 @@ function displayMainMenu(){
                 promptNewRole();
                 break;
             case "Add an Employee":
-                promptName();
+                promptFirstName();
                 break;
             case "Update Employee Role":
-            
+                updateRole();
                 break;
             default:
                 break;
@@ -166,36 +166,21 @@ async function promptNewDept(exitTo){
 
 //takes an optional name, role, and dept. Allows the function to call other functions (like to make a new role midway through) and then return to promptNewEmployee() without losing their progress.
 
-async function promptName(){
-    let q = new Question(qTypes.input,"What is this employee's name","name");
-    draftEmployee.setName(await inquirer.prompt([q]).then((response)=>{
+async function promptFirstName(){
+    let q = new Question(qTypes.input,"What is this employee's first name","name");
+    draftEmployee.setFName(await inquirer.prompt([q]).then((response)=>{
         return (response.name);
     }));
-    promptDept();
+    promptLastName();
 }
-
-async function promptDept(){
-    let ad = await availableDepartments();
-    console.table(ad);
-    let d_list = [];
-    for(const item of ad){
-        d_list.push(item.d_name);
-    }
-    d_list.push("-Create New Department");
-    let q = new Question(qTypes.list,"What is this employee's department?","dept",d_list);
-    let response = await inquirer.prompt([q]).then((response)=>{
-        return response;
-    });
-    if(response.dept == "-Create New Department"){
-        promptNewDept(()=>promptDept());
-        return;
-    }
-    let deptQuery = await queryDeptFrom(response.dept);
-    let loadedDept = new Department(deptQuery[0].d_name,deptQuery[0].d_desc);
-    loadedDept.set(deptQuery[0].id);
-    draftEmployee.setDept(loadedDept);
+async function promptLastName(){
+    let q = new Question(qTypes.input,"What is this employee's last name","name");
+    draftEmployee.setLName(await inquirer.prompt([q]).then((response)=>{
+        return (response.name);
+    }));
     promptRole();
 }
+
 
 async function promptRole(){
     let ar = await availableRoles();
@@ -214,12 +199,25 @@ async function promptRole(){
         return;
     }
     let roleQuery = await queryRoleFrom(response.role);
+    let deptQuery = await (queryRoleDept(roleQuery[0].deptID));
+    let loadedDept = new Department(deptQuery[0].d_name,deptQuery[0].d_desc);
+    
+    loadedDept.set(deptQuery[0].id);
     let loadedRole = new Role(roleQuery[0].title,roleQuery[0].r_desc,roleQuery[0].deptName,roleQuery[0].salary);
     loadedRole.set(roleQuery[0].id);
     draftEmployee.setRole(loadedRole);
+    draftEmployee.setDept(loadedDept);
     assignManager();
 }
-
+async function queryRoleDept(role){
+    return new Promise( ( resolve, reject ) => {
+        db.query('SELECT * FROM departments WHERE id = ?',role, ( err, rows ) => {
+            if ( err )
+                return reject( err );
+            resolve( rows );
+        } );
+    } );
+}
 async function queryRoleFrom(title){
     return new Promise( ( resolve, reject ) => {
         db.query('SELECT * FROM roles WHERE title = ?',title, ( err, rows ) => {
@@ -260,7 +258,7 @@ async function assignManager(exitTo){
                 }
             }
         }
-        db.query('INSERT INTO employees (name,roleID,roleTitle,salary,deptID,deptName,managerID) VALUES ?',[[draftEmployee.getArray()]],function (err, results) {
+        db.query('INSERT INTO employees (firstName,lastName,roleID,roleTitle,salary,deptID,deptName,managerID) VALUES ?',[[draftEmployee.getArray()]],function (err, results) {
             if (err) throw err;  
             //if an exit destination is specified, use that, otherwise use the default.
             if(exitTo){
@@ -302,12 +300,90 @@ function availableManagers(){
     } );
 }
 
+function availableEmployees(){
+    return new Promise( ( resolve, reject ) => {
+        db.query('SELECT * FROM employees', ( err, rows ) => {
+            if ( err ) return resolve([]);
+            resolve( rows );
+        } );
+    } );
+}
+
 async function updateRole(){
-    //get list of employees
-    //ask user to pick
-    //get list of roles
-    //ask user to pick.
-    //set employee role to new role picked by user.
+    let allEmployees = await availableEmployees();
+    console.table(allEmployees);
+    let e_list = [];
+    if(allEmployees){
+        for(const item of allEmployees){
+            e_list.push(item.id+" "+item.firstName+" "+item.lastName);
+        }
+    }else{
+        console.log("No employees currently saved. Returning to main menu.");
+        displayMainMenu();
+        return;
+    }
+    let q = new Question(qTypes.list,"Which employee would you like to modify?","choice",e_list);
+    let response = await inquirer.prompt([q]).then((response)=>{
+        return response;
+    });
+    let empQuery = await queryEmployeeFrom(response.choice);
+    let currentDept = empQuery[0].deptID;
+    console.log("current department id: "+currentDept);
+    let ar = await availableRolesInDept(currentDept);
+    let r_list = [];
+    for(const item of ar){
+        r_list.push(item.id+" "+item.title);
+    }
+    let rq = new Question(qTypes.list,"What is this employee's new role?","role",r_list);
+    let roleResponse = await inquirer.prompt([rq]).then((response)=>{
+        return response;
+    });
+    let roleSplit = roleResponse.role.split(" ");
+    let newRole = await queryRole(roleSplit[0]);
+    let modify = await updateEmployeeRole(newRole[0].id,newRole[0].title,newRole[0].salary,empQuery[0].id);
+
+    displayMainMenu();
+    return;
+  
+}
+async function updateEmployeeRole(roleID,roleTitle,salary,id){
+    return new Promise(( resolve, reject ) => {
+        db.query('UPDATE employees SET roleID = ?, roleTitle = ?, salary = ? WHERE id = ?',[roleID,roleTitle,salary,id], ( err, rows ) => {
+            if ( err )
+                return reject( err );
+            resolve( rows )
+        } );
+    });
+}
+
+async function queryRole(id){
+    return new Promise( ( resolve, reject ) => {
+        db.query('SELECT * FROM roles WHERE id = ?',id, ( err, rows ) => {
+            if ( err )
+                return reject( err );
+            resolve( rows );
+        } );
+    } );
+}
+async function queryEmployeeFrom(idFirstAndLast){
+    let splitName = idFirstAndLast.split(" ");
+    return new Promise( ( resolve, reject ) => {
+        db.query('SELECT * FROM employees WHERE id = ?',splitName[0], ( err, rows ) => {
+            if ( err )
+                return reject( err );
+            resolve( rows );
+        } );
+    } );
+}
+
+function availableRolesInDept(deptID){
+    return new Promise( ( resolve, reject ) => {
+        db.query('SELECT * FROM roles WHERE deptID = ?',deptID, ( err, rows ) => {
+            if ( err )
+                return reject( err );
+            resolve( rows );
+        } );
+    } );
 }
 
 main();

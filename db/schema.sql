@@ -23,7 +23,8 @@ CREATE TABLE roles(
 
 CREATE TABLE employees (
   id INT NOT NULL AUTO_INCREMENT,
-  name VARCHAR(100) NOT NULL,
+  firstName VARCHAR(100) NOT NULL,
+  lastName VARCHAR(100) NOT NULL,
   roleID INT,
   roleTitle VARCHAR(100),
   salary VARCHAR(100) NOT NULL,

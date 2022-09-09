@@ -17,11 +17,9 @@ SO THAT I can organize and plan my business
 ## Acceptance Criteria
 
 ```md
-
-WHEN I choose to view all roles
-THEN I am presented with the job title, role id, the department that role belongs to, and the salary for that role
+ 
 WHEN I choose to view all employees
-THEN I am presented with a formatted table showing employee data, including employee ids, first names, last names, job titles, departments, salaries, and managers that the employees report to
+THEN I am presented with a formatted table showing employee data including the managers that the employees report to
 
 
 WHEN I choose to add an employee
